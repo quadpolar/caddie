@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Caddie">
+<meta name="theme-color" content="#F5F6F2">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Caddie</title>
+<style>
+  :root{
+    --paper:#F5F6F2; --card:#FFFFFF; --ink:#131614; --slate:#6B7370;
+    --line:#DDE0DA; --green:#1E5B3C; --green-soft:#E2ECE5;
+    --red:#C8102E; --red-soft:#F7E3E6; --amber:#8A6D1A; --amber-soft:#F3ECD6;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);
+    padding-bottom:calc(72px + env(safe-area-inset-bottom));
+    -webkit-user-select:none;user-select:none}
+  input,select,textarea{-webkit-user-select:text;user-select:text}
+  .screen{display:none;padding:16px 16px 24px;max-width:520px;margin:0 auto}
+  .screen.active{display:block}
+  .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--slate);font-weight:600}
+  header.app{display:flex;align-items:baseline;justify-content:space-between;
+    padding:calc(10px + env(safe-area-inset-top)) 16px 4px;max-width:520px;margin:0 auto}
+  header.app h1{font-size:15px;letter-spacing:.16em;text-transform:uppercase;font-weight:700}
+  header.app .alt{font-family:var(--mono);font-size:11px;color:var(--slate)}
+
+  /* mode segmented */
+  .seg{display:flex;background:#E9EBE5;border-radius:10px;padding:3px;gap:3px}
+  .seg button{flex:1;border:0;background:transparent;border-radius:8px;padding:8px 6px;
+    font:600 13px var(--sans);color:var(--slate);cursor:pointer}
+  .seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+  .seg.small button{padding:7px 4px;font-size:12px}
+
+  /* yardage input */
+  .yard-wrap{margin:18px 0 6px;text-align:center}
+  .yard-wrap input{width:100%;border:0;background:transparent;text-align:center;
+    font:700 96px/1 var(--mono);letter-spacing:-.02em;color:var(--ink);outline:none;
+    font-variant-numeric:tabular-nums;caret-color:var(--red)}
+  .yard-wrap input::placeholder{color:#C9CDC5}
+  .yard-wrap .unit{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--slate);font-weight:600}
+
+  /* result card */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+  .club-line{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+  .club-name{font:800 40px/1.05 var(--sans);letter-spacing:-.01em}
+  .club-range{font:600 15px var(--mono);color:var(--slate);white-space:nowrap}
+  .swing-tag{display:inline-block;margin-top:10px;padding:6px 12px;border-radius:8px;
+    font:700 14px var(--sans);letter-spacing:.08em;text-transform:uppercase}
+  .swing-smooth{background:var(--green-soft);color:var(--green)}
+  .swing-committed{background:var(--amber-soft);color:var(--amber)}
+  .swing-crush{background:var(--red-soft);color:var(--red)}
+  .swing-note{margin-top:8px;font-size:14px;line-height:1.45;color:var(--ink)}
+  .setup{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);
+    font-size:13px;line-height:1.5;color:var(--slate)}
+  .setup b{color:var(--ink);font-weight:600}
+  .est-chip{display:inline-block;font:700 10px var(--sans);letter-spacing:.1em;color:var(--amber);
+    background:var(--amber-soft);border-radius:5px;padding:2px 6px;vertical-align:middle;margin-left:6px}
+
+  /* range band — the signature */
+  .band-wrap{margin-top:16px}
+  .band-labels{display:flex;font:600 10px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin-bottom:5px}
+  .band-labels span:nth-child(1){width:35%}
+  .band-labels span:nth-child(2){width:37%;text-align:center}
+  .band-labels span:nth-child(3){width:28%;text-align:right}
+  .band{position:relative;height:14px;border-radius:7px;overflow:hidden;display:flex}
+  .band .z1{width:35%;background:#CBDCD1}
+  .band .z2{width:37%;background:#E4D9AE}
+  .band .z3{width:28%;background:#E9B7BF}
+  .needle{position:absolute;top:-4px;bottom:-4px;width:3px;background:var(--red);border-radius:2px;
+    box-shadow:0 0 0 1.5px var(--paper)}
+  .band-wrap{position:relative}
+  .band-outer{position:relative;padding:4px 0}
+  .band-ticks{display:flex;justify-content:space-between;font:600 12px var(--mono);color:var(--slate);margin-top:6px}
+
+  .hint{margin-top:14px;text-align:center;color:var(--slate);font-size:14px}
+
+  /* log screen */
+  h2.sec{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--slate);font-weight:700;margin:18px 0 8px}
+  .chips{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .chips button{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:12px 4px;
+    font:700 15px var(--sans);color:var(--ink);cursor:pointer}
+  .chips button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .field-row{display:flex;gap:10px;align-items:center}
+  .num-in{flex:1;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:12px;
+    font:700 22px var(--mono);text-align:center;outline:none;width:100%}
+  .stepper{display:flex;align-items:center;gap:0;border:1px solid var(--line);border-radius:10px;background:var(--card);overflow:hidden}
+  .stepper button{border:0;background:transparent;font:700 22px var(--sans);width:52px;padding:10px 0;color:var(--ink);cursor:pointer}
+  .stepper .val{font:700 20px var(--mono);min-width:64px;text-align:center}
+  .save-btn{width:100%;margin-top:20px;border:0;border-radius:12px;background:var(--green);color:#fff;
+    font:700 17px var(--sans);padding:16px;cursor:pointer}
+  .save-btn:disabled{opacity:.4}
+  .shot-row{display:flex;justify-content:space-between;align-items:center;background:var(--card);
+    border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13px}
+  .shot-row .main{font:600 14px var(--sans)}
+  .shot-row .sub{color:var(--slate);font-family:var(--mono);font-size:12px;margin-top:2px}
+  .shot-row .del{border:0;background:transparent;color:var(--red);font:600 13px var(--sans);cursor:pointer;padding:6px}
+
+  /* bag screen */
+  table.bag{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  table.bag{border-radius:14px}
+  .bag th{font:600 10px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--slate);
+    text-align:left;padding:10px 10px 6px;border-bottom:1px solid var(--line)}
+  .bag td{padding:9px 10px;border-bottom:1px solid var(--line);font:600 13px var(--mono);white-space:nowrap}
+  .bag tr:last-child td{border-bottom:0}
+  .bag td.name{font-family:var(--sans);font-weight:700;font-size:14px}
+  .shift-badge{font:700 11px var(--mono);border-radius:5px;padding:1px 5px;margin-left:6px}
+  .shift-pos{background:var(--green-soft);color:var(--green)}
+  .shift-neg{background:var(--red-soft);color:var(--red)}
+  .tend{font-size:12px;color:var(--slate);margin-top:10px;line-height:1.6}
+  .btn-row{display:flex;gap:10px;margin-top:16px}
+  .btn-row button,.btn-row label{flex:1;border:1px solid var(--line);background:var(--card);border-radius:10px;
+    padding:12px;font:600 14px var(--sans);color:var(--ink);cursor:pointer;text-align:center}
+  .btn-row .danger{color:var(--red)}
+  .fineprint{margin-top:14px;font:500 11px var(--mono);color:var(--slate);line-height:1.7;text-align:center}
+
+  /* tab bar */
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:rgba(245,246,242,.92);
+    -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--line);
+    padding-bottom:env(safe-area-inset-bottom)}
+  nav.tabs button{flex:1;border:0;background:transparent;padding:12px 0 10px;cursor:pointer;
+    font:700 12px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--slate)}
+  nav.tabs button.on{color:var(--ink)}
+  nav.tabs button.on::after{content:"";display:block;width:22px;height:3px;border-radius:2px;background:var(--red);margin:5px auto 0}
+
+  .toast{position:fixed;left:50%;transform:translateX(-50%) translateY(10px);bottom:calc(90px + env(safe-area-inset-bottom));
+    background:var(--ink);color:#fff;font:600 14px var(--sans);padding:10px 18px;border-radius:10px;
+    opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  @media (prefers-reduced-motion: reduce){.toast{transition:none}}
+  button:focus-visible,input:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+</style>
+</head>
+<body>
+
+<header class="app">
+  <h1>Caddie</h1>
+  <span class="alt" id="hdr-alt">DEN · 5,280 FT</span>
+</header>
+
+<!-- ============ CADDIE ============ -->
+<section class="screen active" id="scr-caddie">
+  <div class="seg" role="tablist" aria-label="Altitude mode">
+    <button id="mode-den" class="on" onclick="setMode('denver')">Denver</button>
+    <button id="mode-sea" onclick="setMode('sea')">Sea level</button>
+  </div>
+
+  <div class="yard-wrap">
+    <input id="yardage" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3"
+           placeholder="150" autocomplete="off" aria-label="Target yardage">
+    <div class="unit">Yards to carry</div>
+  </div>
+
+  <div id="result"></div>
+</section>
+
+<!-- ============ LOG ============ -->
+<section class="screen" id="scr-log">
+  <h2 class="sec">Club</h2>
+  <div class="chips" id="log-clubs"></div>
+
+  <h2 class="sec">Target yardage</h2>
+  <input class="num-in" id="log-target" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="150">
+
+  <h2 class="sec">Strike</h2>
+  <div class="seg small" id="log-strike">
+    <button data-v="flushed" class="on">Flushed</button>
+    <button data-v="thin">Thin</button>
+    <button data-v="fat">Fat</button>
+  </div>
+
+  <h2 class="sec">Result</h2>
+  <div class="seg small" id="log-result">
+    <button data-v="short">Short</button>
+    <button data-v="pin" class="on">Pin-high</button>
+    <button data-v="long">Long</button>
+  </div>
+  <div class="field-row" id="delta-row" style="margin-top:10px;display:none">
+    <div class="stepper">
+      <button onclick="bumpDelta(-5)" aria-label="Minus five">−</button>
+      <span class="val" id="delta-val">10</span>
+      <button onclick="bumpDelta(5)" aria-label="Plus five">+</button>
+    </div>
+    <span style="font:600 13px var(--sans);color:var(--slate)">yards <span id="delta-dir">long</span></span>
+  </div>
+
+  <h2 class="sec">Miss</h2>
+  <div class="seg small" id="log-dir">
+    <button data-v="left">Left</button>
+    <button data-v="straight" class="on">Straight</button>
+    <button data-v="right">Right</button>
+  </div>
+
+  <button class="save-btn" id="save-shot" onclick="saveShot()" disabled>Log shot</button>
+
+  <h2 class="sec">Recent shots</h2>
+  <div id="shot-list"></div>
+</section>
+
+<!-- ============ BAG ============ -->
+<section class="screen" id="scr-bag">
+  <h2 class="sec" style="margin-top:4px">My numbers · <span id="bag-mode-label">Denver carry</span></h2>
+  <table class="bag">
+    <thead><tr><th>Club</th><th>Solid</th><th>Mishit</th><th>Logs</th></tr></thead>
+    <tbody id="bag-body"></tbody>
+  </table>
+  <div class="tend" id="tendencies"></div>
+  <div class="btn-row">
+    <button onclick="exportData()">Export</button>
+    <label>Import<input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)"></label>
+    <button class="danger" onclick="resetData()">Reset</button>
+  </div>
+  <p class="fineprint">Mishit = solid × 0.83 &nbsp;·&nbsp; Sea level = Denver × 0.865<br>
+  Ranges shift from flushed logged shots only. All numbers are carry.</p>
+</section>
+
+<nav class="tabs">
+  <button id="tab-caddie" class="on" onclick="showScreen('caddie')">Caddie</button>
+  <button id="tab-log" onclick="showScreen('log')">Log</button>
+  <button id="tab-bag" onclick="showScreen('bag')">Bag</button>
+</nav>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ================= SEED DATA — Denver carry ================= */
+const ALT = 0.865;               // sea level = Denver × 0.865
+const MISHIT = 0.83;             // mishit = solid × 0.83
+const SETUP_MID  = '<b>Ball</b> center · <b>hands</b> slightly ahead';
+const SETUP_WEDGE= '<b>Ball</b> center-to-back · <b>hands</b> ahead · <b>weight</b> forward';
+const SEED = [
+  {id:'DR', name:'Driver', lo:260, hi:280, setup:'<b>Ball</b> off lead heel · <b>stance</b> wide · <b>hands</b> even', roll:'+ ~20 yds roll on top of carry'},
+  {id:'3i', name:'3 Iron', lo:198, hi:208, est:true, setup:SETUP_MID},
+  {id:'4i', name:'4 Iron', lo:185, hi:195, setup:SETUP_MID},
+  {id:'5i', name:'5 Iron', lo:172, hi:182, setup:SETUP_MID},
+  {id:'6i', name:'6 Iron', lo:160, hi:170, setup:SETUP_MID},
+  {id:'7i', name:'7 Iron', lo:148, hi:158, setup:SETUP_MID},
+  {id:'8i', name:'8 Iron', lo:136, hi:145, setup:SETUP_MID},
+  {id:'9i', name:'9 Iron', lo:122, hi:131, setup:SETUP_MID},
+  {id:'PW', name:'PW',     lo:108, hi:118, setup:SETUP_WEDGE},
+  {id:'54', name:'54°',    lo:90,  hi:103, setup:SETUP_WEDGE},
+  {id:'58', name:'58°',    lo:60,  hi:78,  setup:SETUP_WEDGE},
+];
+
+/* ================= STATE ================= */
+let mode = 'denver';   // 'denver' | 'sea'
+let shots = [];        // {id,t,club,target,strike,delta,dir,mode}
+let adj = {};          // clubId -> shift (yds, Denver)
+
+/* ================= IndexedDB ================= */
+function idb(){
+  return new Promise((res,rej)=>{
+    const r = indexedDB.open('caddie', 1);
+    r.onupgradeneeded = ()=> {
+      const db = r.result;
+      if(!db.objectStoreNames.contains('shots')) db.createObjectStore('shots',{keyPath:'id',autoIncrement:true});
+      if(!db.objectStoreNames.contains('meta'))  db.createObjectStore('meta');
+    };
+    r.onsuccess = ()=>res(r.result);
+    r.onerror   = ()=>rej(r.error);
+  });
+}
+async function dbAll(){
+  const db = await idb();
+  return new Promise((res,rej)=>{
+    const q = db.transaction('shots').objectStore('shots').getAll();
+    q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error);
+  });
+}
+async function dbAdd(shot){
+  const db = await idb();
+  return new Promise((res,rej)=>{
+    const q = db.transaction('shots','readwrite').objectStore('shots').add(shot);
+    q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error);
+  });
+}
+async function dbDel(id){
+  const db = await idb();
+  return new Promise((res,rej)=>{
+    const q = db.transaction('shots','readwrite').objectStore('shots').delete(id);
+    q.onsuccess=()=>res(); q.onerror=()=>rej(q.error);
+  });
+}
+async function dbClearShots(){
+  const db = await idb();
+  return new Promise((res,rej)=>{
+    const q = db.transaction('shots','readwrite').objectStore('shots').clear();
+    q.onsuccess=()=>res(); q.onerror=()=>rej(q.error);
+  });
+}
+async function metaSet(k,v){
+  const db = await idb();
+  return new Promise((res,rej)=>{
+    const q = db.transaction('meta','readwrite').objectStore('meta').put(v,k);
+    q.onsuccess=()=>res(); q.onerror=()=>rej(q.error);
+  });
+}
+async function metaGet(k){
+  const db = await idb();
+  return new Promise((res,rej)=>{
+    const q = db.transaction('meta').objectStore('meta').get(k);
+    q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error);
+  });
+}
+
+/* ================= LEARNING LOOP =================
+   Flushed shots only. Actual carry = target + delta, normalized to Denver.
+   Recency-weighted mean of actuals vs seed midpoint; blend by shot count
+   n/(n+3); shift clamped to ±15. Range width stays fixed; the range slides. */
+function recomputeAdjustments(){
+  adj = {};
+  for(const c of SEED){
+    const flushed = shots.filter(s=>s.club===c.id && s.strike==='flushed')
+                         .sort((a,b)=>b.t-a.t);
+    if(!flushed.length){ adj[c.id]=0; continue; }
+    let wSum=0, aSum=0;
+    flushed.forEach((s,i)=>{
+      const actualDen = (s.target + s.delta) / (s.mode==='sea' ? ALT : 1);
+      const w = Math.pow(0.85, i);
+      wSum += w; aSum += w*actualDen;
+    });
+    const mean = aSum/wSum;
+    const seedMid = (c.lo+c.hi)/2;
+    const n = flushed.length;
+    let shift = (mean - seedMid) * (n/(n+3));
+    shift = Math.max(-15, Math.min(15, shift));
+    adj[c.id] = Math.round(shift);
+  }
+}
+function clubAdj(c){                    // adjusted Denver range
+  const s = adj[c.id]||0;
+  return {lo:c.lo+s, hi:c.hi+s, shift:s};
+}
+function flushedCount(id){ return shots.filter(s=>s.club===id && s.strike==='flushed').length; }
+function isEst(c){ return c.est && flushedCount(c.id) < 3; }
+function disp(y){ return Math.round(mode==='sea' ? y*ALT : y); }  // Denver -> display
+
+/* ================= RECOMMENDATION ================= */
+function recommend(input){
+  const yd = mode==='sea' ? input/ALT : input;   // normalize to Denver
+  const clubs = SEED.map(c=>({c, r:clubAdj(c)})).sort((a,b)=>b.r.lo-a.r.lo); // longest first
+  const driver = clubs[0];
+  const shortest = clubs[clubs.length-1];
+
+  if(yd > driver.r.hi){
+    return {c:driver.c, r:driver.r, zone:'crush', pos:1,
+      note:'Beyond your carry — Driver, full send. Expect to come up short of the number; plan the second shot.'};
+  }
+  if(yd < shortest.r.lo){
+    return {chip:true};
+  }
+  // exact range hit
+  for(const {c,r} of clubs){
+    if(yd >= r.lo && yd <= r.hi){
+      const pos = (yd - r.lo)/(r.hi - r.lo);
+      const zone = pos < 0.35 ? 'smooth' : pos < 0.72 ? 'committed' : 'crush';
+      return {c, r, zone, pos};
+    }
+  }
+  // gap between clubs -> take the longer club, choke down, stay committed
+  for(let i=0;i<clubs.length-1;i++){
+    const longer = clubs[i], shorter = clubs[i+1];
+    if(yd < longer.r.lo && yd > shorter.r.hi){
+      if(longer.c.id==='DR'){
+        return {c:shorter.c, r:shorter.r, zone:'crush', pos:1,
+          note:`Dead zone in the bag (${disp(shorter.r.hi)}\u2013${disp(longer.r.lo)}). Crush ${shorter.c.name} and take the rollout, or hit Driver smooth and play past the number \u2014 whichever leaves the better next shot.`};
+      }
+      return {c:longer.c, r:longer.r, zone:'choke', pos:0,
+        note:'Between clubs — take the longer club, choke down half an inch, and keep the swing committed. Don\u2019t ease off the shorter club.'};
+    }
+  }
+  return null;
+}
+
+const SWING_COPY = {
+  smooth:   {tag:'Smooth', cls:'swing-smooth',
+    note:'Smooth tempo — but full turn and commit through the ball. No decel.'},
+  committed:{tag:'Committed', cls:'swing-committed',
+    note:'Stock swing. Accelerate through impact — short misses come from easing off.'},
+  crush:    {tag:'Crush', cls:'swing-crush',
+    note:'Top of the range — full send. Trust the number and go.'},
+  choke:    {tag:'Choke down \u00BD\u2033', cls:'swing-committed', note:''}
+};
+
+function renderResult(){
+  const el = document.getElementById('result');
+  const raw = document.getElementById('yardage').value.trim();
+  const y = parseInt(raw,10);
+  if(!raw || isNaN(y) || y < 10){
+    el.innerHTML = '<p class="hint">Type a carry number and I\u2019ll pull the club.</p>';
+    return;
+  }
+  const rec = recommend(y);
+  if(rec && rec.chip){
+    el.innerHTML = `
+      <div class="card">
+        <div class="club-line"><span class="club-name">Chip it</span>
+          <span class="club-range">&lt; ${disp(SEED[SEED.length-1].lo + (adj['58']||0))} yds</span></div>
+        <span class="swing-tag swing-smooth">58° or PW</span>
+        <div class="swing-note">Pick landing spot, not the pin. Dead hands, let the loft work.</div>
+        <div class="setup"><b>Ball</b> back · <b>hands</b> well ahead of the face · <b>weight</b> forward · narrow stance</div>
+      </div>`;
+    return;
+  }
+  if(!rec){ el.innerHTML = '<p class="hint">No club covers that number.</p>'; return; }
+
+  const {c, r, zone, pos} = rec;
+  const sw = SWING_COPY[zone];
+  const note = rec.note || sw.note;
+  const est = isEst(c) ? '<span class="est-chip">EST</span>' : '';
+  const roll = c.roll ? `<div class="swing-note" style="color:var(--slate)">${c.roll}</div>` : '';
+  const estNote = isEst(c) ? '<div class="swing-note" style="color:var(--amber)">Estimated range — log real shots with this club to dial it in.</div>' : '';
+  const needleLeft = Math.max(2, Math.min(98, pos*100));
+
+  el.innerHTML = `
+    <div class="card">
+      <div class="club-line">
+        <span class="club-name">${c.name}${est}</span>
+        <span class="club-range">${disp(r.lo)}\u2013${disp(r.hi)}</span>
+      </div>
+      <span class="swing-tag ${sw.cls}">${sw.tag}</span>
+      <div class="swing-note">${note}</div>
+      ${roll}${estNote}
+      <div class="band-wrap">
+        <div class="band-labels"><span>Smooth</span><span>Committed</span><span>Crush</span></div>
+        <div class="band-outer">
+          <div class="band"><div class="z1"></div><div class="z2"></div><div class="z3"></div></div>
+          <div class="needle" style="left:${needleLeft}%"></div>
+        </div>
+        <div class="band-ticks"><span>${disp(r.lo)}</span><span>${disp(r.hi)}</span></div>
+      </div>
+      <div class="setup">${c.setup}</div>
+    </div>`;
+}
+
+/* ================= LOG SCREEN ================= */
+let logClub=null, logStrike='flushed', logResult='pin', logDir='straight', logDelta=10;
+
+function buildLogClubs(){
+  const wrap = document.getElementById('log-clubs');
+  wrap.innerHTML = SEED.map(c=>`<button data-c="${c.id}">${c.name}</button>`).join('');
+  wrap.querySelectorAll('button').forEach(b=>{
+    b.onclick = ()=>{
+      wrap.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on'); logClub=b.dataset.c; validateSave();
+    };
+  });
+}
+function segWire(id, set){
+  const wrap = document.getElementById(id);
+  wrap.querySelectorAll('button').forEach(b=>{
+    b.onclick = ()=>{
+      wrap.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on'); set(b.dataset.v);
+    };
+  });
+}
+function bumpDelta(d){
+  logDelta = Math.max(5, Math.min(60, logDelta+d));
+  document.getElementById('delta-val').textContent = logDelta;
+}
+function validateSave(){
+  const t = parseInt(document.getElementById('log-target').value,10);
+  document.getElementById('save-shot').disabled = !(logClub && t>0);
+}
+async function saveShot(){
+  const target = parseInt(document.getElementById('log-target').value,10);
+  const delta = logResult==='pin' ? 0 : (logResult==='long' ? logDelta : -logDelta);
+  const shot = {t:Date.now(), club:logClub, target, strike:logStrike, delta, dir:logDir, mode};
+  shot.id = await dbAdd(shot);
+  shots.push(shot);
+  recomputeAdjustments();
+  renderShotList(); renderBag(); renderResult();
+  toast('Logged \u2014 numbers updated');
+}
+async function delShot(id){
+  await dbDel(id);
+  shots = shots.filter(s=>s.id!==id);
+  recomputeAdjustments();
+  renderShotList(); renderBag(); renderResult();
+}
+function renderShotList(){
+  const el = document.getElementById('shot-list');
+  const recent = [...shots].sort((a,b)=>b.t-a.t).slice(0,10);
+  if(!recent.length){ el.innerHTML = '<p class="hint" style="text-align:left">No shots logged yet. Every flushed shot you log sharpens your ranges.</p>'; return; }
+  el.innerHTML = recent.map(s=>{
+    const c = SEED.find(x=>x.id===s.club);
+    const res = s.delta===0 ? 'pin-high' : (s.delta>0 ? `+${s.delta} long` : `${s.delta} short`);
+    const d = new Date(s.t);
+    return `<div class="shot-row">
+      <div><div class="main">${c.name} \u00B7 ${s.target} yds \u00B7 ${s.strike}</div>
+      <div class="sub">${res} \u00B7 ${s.dir} \u00B7 ${s.mode==='sea'?'sea':'DEN'} \u00B7 ${d.getMonth()+1}/${d.getDate()}</div></div>
+      <button class="del" onclick="delShot(${s.id})">Delete</button>
+    </div>`;
+  }).join('');
+}
+
+/* ================= BAG SCREEN ================= */
+function renderBag(){
+  const body = document.getElementById('bag-body');
+  document.getElementById('bag-mode-label').textContent = mode==='sea' ? 'Sea-level carry' : 'Denver carry';
+  body.innerHTML = SEED.map(c=>{
+    const r = clubAdj(c);
+    const mlo = Math.round(r.lo*MISHIT), mhi = Math.round(r.hi*MISHIT);
+    const n = shots.filter(s=>s.club===c.id).length;
+    const badge = r.shift ? `<span class="shift-badge ${r.shift>0?'shift-pos':'shift-neg'}">${r.shift>0?'+':''}${r.shift}</span>` : '';
+    const est = isEst(c) ? '<span class="est-chip">EST</span>' : '';
+    return `<tr>
+      <td class="name">${c.name}${est}</td>
+      <td>${disp(r.lo)}\u2013${disp(r.hi)}${badge}</td>
+      <td style="color:var(--slate)">${disp(mlo)}\u2013${disp(mhi)}</td>
+      <td style="color:var(--slate)">${n||'\u2014'}</td>
+    </tr>`;
+  }).join('');
+  // tendencies
+  const lines = [];
+  for(const c of SEED){
+    const recent = shots.filter(s=>s.club===c.id).sort((a,b)=>b.t-a.t).slice(0,10);
+    if(recent.length < 4) continue;
+    const L = recent.filter(s=>s.dir==='left').length, R = recent.filter(s=>s.dir==='right').length;
+    if(L/recent.length >= .6) lines.push(`${c.name}: missing left (${L} of last ${recent.length})`);
+    else if(R/recent.length >= .6) lines.push(`${c.name}: missing right (${R} of last ${recent.length})`);
+  }
+  document.getElementById('tendencies').innerHTML = lines.length ? '<b>Tendencies</b><br>'+lines.join('<br>') : '';
+}
+
+/* ================= EXPORT / IMPORT / RESET ================= */
+function exportData(){
+  const blob = new Blob([JSON.stringify({version:1, exported:new Date().toISOString(), mode, shots}, null, 1)],
+    {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `caddie-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('Backup exported');
+}
+async function importData(ev){
+  const file = ev.target.files[0]; if(!file) return;
+  try{
+    const data = JSON.parse(await file.text());
+    if(!Array.isArray(data.shots)) throw 0;
+    if(!confirm(`Replace current log with ${data.shots.length} imported shots?`)) return;
+    await dbClearShots();
+    shots = [];
+    for(const s of data.shots){
+      const {id, ...rest} = s;
+      rest.id = await dbAdd(rest);
+      shots.push(rest);
+    }
+    recomputeAdjustments(); renderShotList(); renderBag(); renderResult();
+    toast('Imported');
+  }catch{ toast('That file didn\u2019t parse \u2014 use a Caddie export'); }
+  ev.target.value = '';
+}
+async function resetData(){
+  if(!confirm('Delete all logged shots and return to seed numbers?')) return;
+  await dbClearShots();
+  shots = []; recomputeAdjustments();
+  renderShotList(); renderBag(); renderResult();
+  toast('Back to seed numbers');
+}
+
+/* ================= NAV / MODE / TOAST ================= */
+function showScreen(name){
+  for(const s of ['caddie','log','bag']){
+    document.getElementById('scr-'+s).classList.toggle('active', s===name);
+    document.getElementById('tab-'+s).classList.toggle('on', s===name);
+  }
+  if(name==='bag') renderBag();
+}
+async function setMode(m){
+  mode = m;
+  document.getElementById('mode-den').classList.toggle('on', m==='denver');
+  document.getElementById('mode-sea').classList.toggle('on', m==='sea');
+  document.getElementById('hdr-alt').textContent = m==='sea' ? 'SEA LEVEL \u00B7 \u00D70.865' : 'DEN \u00B7 5,280 FT';
+  await metaSet('mode', m);
+  renderResult(); renderBag();
+}
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ================= INIT ================= */
+(async function init(){
+  buildLogClubs();
+  segWire('log-strike', v=>logStrike=v);
+  segWire('log-dir',    v=>logDir=v);
+  segWire('log-result', v=>{
+    logResult=v;
+    const row = document.getElementById('delta-row');
+    row.style.display = v==='pin' ? 'none' : 'flex';
+    document.getElementById('delta-dir').textContent = v==='long' ? 'long' : 'short';
+  });
+  document.getElementById('yardage').addEventListener('input', renderResult);
+  document.getElementById('log-target').addEventListener('input', validateSave);
+
+  try{
+    const savedMode = await metaGet('mode');
+    if(savedMode) { mode = savedMode; }
+    shots = await dbAll();
+  }catch(e){ /* first run / private mode */ }
+  document.getElementById('mode-den').classList.toggle('on', mode==='denver');
+  document.getElementById('mode-sea').classList.toggle('on', mode==='sea');
+  document.getElementById('hdr-alt').textContent = mode==='sea' ? 'SEA LEVEL \u00B7 \u00D70.865' : 'DEN \u00B7 5,280 FT';
+
+  recomputeAdjustments();
+  renderResult(); renderShotList(); renderBag();
+
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  }
+})();
+</script>
+</body>
+</html>
