@@ -7,136 +7,182 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Caddie">
-<meta name="theme-color" content="#F5F6F2">
+<meta name="theme-color" content="#F4F3EC">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <title>Caddie</title>
 <style>
   :root{
-    --paper:#F5F6F2; --card:#FFFFFF; --ink:#131614; --slate:#6B7370;
-    --line:#DDE0DA; --green:#1E5B3C; --green-soft:#E2ECE5;
-    --red:#C8102E; --red-soft:#F7E3E6; --amber:#8A6D1A; --amber-soft:#F3ECD6;
-    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
+    --paper:#F4F3EC; --card:#FFFFFF; --ink:#17160F; --slate:#6E6D62;
+    --line:#E4E2D6;
+    --volt:#D8F133; --volt-deep:#B8D40E;
+    --indigo:#5A54E6; --indigo-soft:#E4E2FB;
+    --teal:#0F5F58; --teal-soft:#D9EDE4;
+    --green:#0F5F58; --green-soft:#D9EDE4;
+    --red:#D9442B; --red-soft:#F8E2DB;
+    --amber:#8A6C15; --amber-soft:#F0ECCF;
+    --mono:ui-rounded,-apple-system,BlinkMacSystemFont,sans-serif;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html,body{height:100%}
   body{background:var(--paper);color:var(--ink);font-family:var(--sans);
-    padding-bottom:calc(72px + env(safe-area-inset-bottom));
+    padding-bottom:calc(76px + env(safe-area-inset-bottom));
     -webkit-user-select:none;user-select:none}
   input,select,textarea{-webkit-user-select:text;user-select:text}
   .screen{display:none;padding:16px 16px 24px;max-width:520px;margin:0 auto}
   .screen.active{display:block}
-  .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--slate);font-weight:600}
   header.app{display:flex;align-items:baseline;justify-content:space-between;
-    padding:calc(10px + env(safe-area-inset-top)) 16px 4px;max-width:520px;margin:0 auto}
-  header.app h1{font-size:15px;letter-spacing:.16em;text-transform:uppercase;font-weight:700}
-  header.app .alt{font-family:var(--mono);font-size:11px;color:var(--slate)}
+    padding:calc(12px + env(safe-area-inset-top)) 16px 6px;max-width:520px;margin:0 auto}
+  header.app h1{font-size:17px;letter-spacing:.06em;text-transform:uppercase;
+    font-weight:900;font-style:italic}
+  header.app h1::after{content:" ///";color:var(--volt-deep);font-style:italic}
+  header.app .alt{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--slate)}
 
-  /* mode segmented */
-  .seg{display:flex;background:#E9EBE5;border-radius:10px;padding:3px;gap:3px}
-  .seg button{flex:1;border:0;background:transparent;border-radius:8px;padding:8px 6px;
-    font:600 13px var(--sans);color:var(--slate);cursor:pointer}
-  .seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
-  .seg.small button{padding:7px 4px;font-size:12px}
+  /* segmented controls */
+  .seg{display:flex;background:#E9E7DC;border-radius:14px;padding:4px;gap:4px}
+  .seg button{flex:1;border:0;background:transparent;border-radius:10px;padding:9px 6px;
+    font:700 13px var(--sans);color:var(--slate);cursor:pointer}
+  .seg button.on{background:var(--ink);color:var(--volt);box-shadow:0 1px 3px rgba(23,22,15,.25)}
+  .seg.small button{padding:8px 4px;font-size:12px}
 
   /* yardage input */
-  .yard-wrap{margin:18px 0 6px;text-align:center}
+  .yard-wrap{margin:20px 0 6px;text-align:center}
   .yard-wrap input{width:100%;border:0;background:transparent;text-align:center;
-    font:700 96px/1 var(--mono);letter-spacing:-.02em;color:var(--ink);outline:none;
-    font-variant-numeric:tabular-nums;caret-color:var(--red)}
-  .yard-wrap input::placeholder{color:#C9CDC5}
-  .yard-wrap .unit{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--slate);font-weight:600}
+    font:800 104px/1 var(--mono);letter-spacing:-.03em;color:var(--ink);outline:none;
+    font-variant-numeric:tabular-nums;caret-color:var(--indigo)}
+  .yard-wrap input::placeholder{color:#D4D2C3}
+  .yard-wrap .unit{font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--slate);font-weight:800}
 
   /* result card */
-  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+  .card{background:var(--card);border-radius:22px;padding:18px;margin-top:14px;
+    box-shadow:0 2px 10px rgba(23,22,15,.06)}
   .club-line{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-  .club-name{font:800 40px/1.05 var(--sans);letter-spacing:-.01em}
-  .club-range{font:600 15px var(--mono);color:var(--slate);white-space:nowrap}
-  .swing-tag{display:inline-block;margin-top:10px;padding:6px 12px;border-radius:8px;
-    font:700 14px var(--sans);letter-spacing:.08em;text-transform:uppercase}
-  .swing-smooth{background:var(--green-soft);color:var(--green)}
-  .swing-committed{background:var(--amber-soft);color:var(--amber)}
-  .swing-crush{background:var(--red-soft);color:var(--red)}
-  .swing-note{margin-top:8px;font-size:14px;line-height:1.45;color:var(--ink)}
-  .setup{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);
+  .club-name{font:900 42px/1.05 var(--sans);letter-spacing:-.02em}
+  .club-range{font:800 16px var(--mono);color:var(--slate);white-space:nowrap;
+    font-variant-numeric:tabular-nums}
+  .swing-tag{display:inline-block;margin-top:12px;padding:8px 14px;border-radius:10px;
+    font:900 14px var(--sans);letter-spacing:.08em;text-transform:uppercase;font-style:italic}
+  .swing-smooth{background:var(--teal);color:#fff}
+  .swing-committed{background:var(--indigo);color:#fff}
+  .swing-crush{background:var(--volt);color:var(--ink)}
+  .swing-note{margin-top:10px;font-size:14px;line-height:1.45;color:var(--ink)}
+  .setup{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);
     font-size:13px;line-height:1.5;color:var(--slate)}
-  .setup b{color:var(--ink);font-weight:600}
-  .est-chip{display:inline-block;font:700 10px var(--sans);letter-spacing:.1em;color:var(--amber);
-    background:var(--amber-soft);border-radius:5px;padding:2px 6px;vertical-align:middle;margin-left:6px}
+  .setup b{color:var(--ink);font-weight:700}
+  .est-chip{display:inline-block;font:800 10px var(--sans);letter-spacing:.1em;color:var(--amber);
+    background:var(--amber-soft);border-radius:6px;padding:2px 7px;vertical-align:middle;margin-left:6px}
 
   /* range band — the signature */
-  .band-wrap{margin-top:16px}
-  .band-labels{display:flex;font:600 10px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin-bottom:5px}
+  .band-wrap{position:relative;margin-top:18px}
+  .band-labels{display:flex;font:800 10px var(--sans);letter-spacing:.1em;text-transform:uppercase;
+    color:var(--slate);margin-bottom:6px}
   .band-labels span:nth-child(1){width:35%}
   .band-labels span:nth-child(2){width:37%;text-align:center}
   .band-labels span:nth-child(3){width:28%;text-align:right}
-  .band{position:relative;height:14px;border-radius:7px;overflow:hidden;display:flex}
-  .band .z1{width:35%;background:#CBDCD1}
-  .band .z2{width:37%;background:#E4D9AE}
-  .band .z3{width:28%;background:#E9B7BF}
-  .needle{position:absolute;top:-4px;bottom:-4px;width:3px;background:var(--red);border-radius:2px;
-    box-shadow:0 0 0 1.5px var(--paper)}
-  .band-wrap{position:relative}
+  .band{position:relative;height:16px;border-radius:8px;overflow:hidden;display:flex}
+  .band .z1{width:35%;background:#BFE0D4}
+  .band .z2{width:37%;background:#CFCCF7}
+  .band .z3{width:28%;background:var(--volt)}
   .band-outer{position:relative;padding:4px 0}
-  .band-ticks{display:flex;justify-content:space-between;font:600 12px var(--mono);color:var(--slate);margin-top:6px}
+  .needle{position:absolute;top:-4px;bottom:-4px;width:4px;background:var(--ink);border-radius:2px;
+    box-shadow:0 0 0 2px var(--card)}
+  .band-ticks{display:flex;justify-content:space-between;font:800 12px var(--mono);
+    color:var(--slate);margin-top:6px;font-variant-numeric:tabular-nums}
 
-  .hint{margin-top:14px;text-align:center;color:var(--slate);font-size:14px}
+  .hint{margin-top:16px;text-align:center;color:var(--slate);font-size:14px}
+
+  /* cart GPS mode */
+  .fpb-row{display:flex;gap:10px}
+  .fpb{flex:1;text-align:center}
+  .fpb label{display:block;font:800 11px var(--sans);letter-spacing:.16em;text-transform:uppercase;
+    color:var(--slate);margin-bottom:6px}
+  .fpb input{width:100%;border:0;background:var(--card);border-radius:16px;
+    padding:16px 4px;font:800 32px var(--mono);text-align:center;outline:none;color:var(--ink);
+    font-variant-numeric:tabular-nums;caret-color:var(--indigo);
+    box-shadow:0 2px 8px rgba(23,22,15,.06)}
+  .fpb input::placeholder{color:#D4D2C3}
+  .fpb input:focus{box-shadow:0 0 0 2px var(--ink),0 2px 8px rgba(23,22,15,.06)}
+  .target-strip{margin-top:14px;background:var(--ink);color:#fff;border-radius:16px;padding:14px 18px;
+    display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .target-strip .num{font:800 34px var(--mono);color:var(--volt);font-variant-numeric:tabular-nums}
+  .target-strip .why{font:700 12px var(--sans);letter-spacing:.03em;text-align:right;
+    color:#DCDACB;line-height:1.4}
+  .depth-flag{margin-top:8px;padding:10px 14px;border-radius:12px;background:var(--red-soft);
+    color:var(--red);font:700 13px var(--sans);line-height:1.4}
 
   /* log screen */
-  h2.sec{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--slate);font-weight:700;margin:18px 0 8px}
+  h2.sec{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--slate);
+    font-weight:900;margin:20px 0 8px}
   .chips{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-  .chips button{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:12px 4px;
-    font:700 15px var(--sans);color:var(--ink);cursor:pointer}
-  .chips button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .chips button{border:0;background:var(--card);border-radius:12px;padding:13px 4px;
+    font:800 15px var(--sans);color:var(--ink);cursor:pointer;
+    box-shadow:0 1px 4px rgba(23,22,15,.06)}
+  .chips button.on{background:var(--ink);color:var(--volt)}
   .field-row{display:flex;gap:10px;align-items:center}
-  .num-in{flex:1;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:12px;
-    font:700 22px var(--mono);text-align:center;outline:none;width:100%}
-  .stepper{display:flex;align-items:center;gap:0;border:1px solid var(--line);border-radius:10px;background:var(--card);overflow:hidden}
-  .stepper button{border:0;background:transparent;font:700 22px var(--sans);width:52px;padding:10px 0;color:var(--ink);cursor:pointer}
-  .stepper .val{font:700 20px var(--mono);min-width:64px;text-align:center}
-  .save-btn{width:100%;margin-top:20px;border:0;border-radius:12px;background:var(--green);color:#fff;
-    font:700 17px var(--sans);padding:16px;cursor:pointer}
-  .save-btn:disabled{opacity:.4}
+  .num-in{flex:1;border:0;background:var(--card);border-radius:12px;padding:13px;
+    font:800 22px var(--mono);text-align:center;outline:none;width:100%;
+    font-variant-numeric:tabular-nums;box-shadow:0 1px 4px rgba(23,22,15,.06)}
+  .num-in:focus{box-shadow:0 0 0 2px var(--ink)}
+  .stepper{display:flex;align-items:center;gap:0;border:0;border-radius:12px;background:var(--card);
+    overflow:hidden;box-shadow:0 1px 4px rgba(23,22,15,.06)}
+  .stepper button{border:0;background:transparent;font:800 22px var(--sans);width:52px;
+    padding:11px 0;color:var(--ink);cursor:pointer}
+  .stepper .val{font:800 20px var(--mono);min-width:64px;text-align:center;
+    font-variant-numeric:tabular-nums}
+  .save-btn{width:100%;margin-top:22px;border:0;border-radius:16px;background:var(--ink);
+    color:var(--volt);font:900 17px var(--sans);letter-spacing:.04em;text-transform:uppercase;
+    font-style:italic;padding:17px;cursor:pointer}
+  .save-btn:disabled{opacity:.35}
   .shot-row{display:flex;justify-content:space-between;align-items:center;background:var(--card);
-    border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13px}
-  .shot-row .main{font:600 14px var(--sans)}
+    border:0;border-radius:14px;padding:11px 14px;margin-bottom:8px;font-size:13px;
+    box-shadow:0 1px 4px rgba(23,22,15,.05)}
+  .shot-row .main{font:700 14px var(--sans)}
   .shot-row .sub{color:var(--slate);font-family:var(--mono);font-size:12px;margin-top:2px}
-  .shot-row .del{border:0;background:transparent;color:var(--red);font:600 13px var(--sans);cursor:pointer;padding:6px}
+  .shot-row .del{border:0;background:transparent;color:var(--red);font:700 13px var(--sans);
+    cursor:pointer;padding:6px}
 
   /* bag screen */
-  table.bag{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
-  table.bag{border-radius:14px}
-  .bag th{font:600 10px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--slate);
-    text-align:left;padding:10px 10px 6px;border-bottom:1px solid var(--line)}
-  .bag td{padding:9px 10px;border-bottom:1px solid var(--line);font:600 13px var(--mono);white-space:nowrap}
+  table.bag{width:100%;border-collapse:collapse;background:var(--card);border-radius:18px;
+    overflow:hidden;box-shadow:0 2px 10px rgba(23,22,15,.06)}
+  .bag th{font:800 10px var(--sans);letter-spacing:.12em;text-transform:uppercase;
+    color:var(--slate);text-align:left;padding:12px 12px 7px;border-bottom:1px solid var(--line)}
+  .bag td{padding:10px 12px;border-bottom:1px solid var(--line);font:700 13px var(--mono);
+    white-space:nowrap;font-variant-numeric:tabular-nums}
   .bag tr:last-child td{border-bottom:0}
-  .bag td.name{font-family:var(--sans);font-weight:700;font-size:14px}
-  .shift-badge{font:700 11px var(--mono);border-radius:5px;padding:1px 5px;margin-left:6px}
-  .shift-pos{background:var(--green-soft);color:var(--green)}
+  .bag td.name{font-family:var(--sans);font-weight:800;font-size:14px}
+  .shift-badge{font:800 11px var(--mono);border-radius:6px;padding:1px 6px;margin-left:6px}
+  .shift-pos{background:var(--teal-soft);color:var(--teal)}
   .shift-neg{background:var(--red-soft);color:var(--red)}
-  .tend{font-size:12px;color:var(--slate);margin-top:10px;line-height:1.6}
+  .tend{font-size:12px;color:var(--slate);margin-top:12px;line-height:1.6}
+  .tend b{color:var(--ink)}
   .btn-row{display:flex;gap:10px;margin-top:16px}
-  .btn-row button,.btn-row label{flex:1;border:1px solid var(--line);background:var(--card);border-radius:10px;
-    padding:12px;font:600 14px var(--sans);color:var(--ink);cursor:pointer;text-align:center}
+  .btn-row button,.btn-row label{flex:1;border:0;background:var(--card);border-radius:12px;
+    padding:13px;font:700 14px var(--sans);color:var(--ink);cursor:pointer;text-align:center;
+    box-shadow:0 1px 4px rgba(23,22,15,.06)}
   .btn-row .danger{color:var(--red)}
-  .fineprint{margin-top:14px;font:500 11px var(--mono);color:var(--slate);line-height:1.7;text-align:center}
+  .fineprint{margin-top:16px;font:600 11px var(--mono);color:var(--slate);line-height:1.7;
+    text-align:center}
 
   /* tab bar */
-  nav.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:rgba(245,246,242,.92);
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:rgba(244,243,236,.92);
     -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--line);
     padding-bottom:env(safe-area-inset-bottom)}
-  nav.tabs button{flex:1;border:0;background:transparent;padding:12px 0 10px;cursor:pointer;
-    font:700 12px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--slate)}
+  nav.tabs button{flex:1;border:0;background:transparent;padding:13px 0 11px;cursor:pointer;
+    font:900 12px var(--sans);letter-spacing:.12em;text-transform:uppercase;font-style:italic;
+    color:var(--slate)}
   nav.tabs button.on{color:var(--ink)}
-  nav.tabs button.on::after{content:"";display:block;width:22px;height:3px;border-radius:2px;background:var(--red);margin:5px auto 0}
+  nav.tabs button.on::after{content:"";display:block;width:24px;height:4px;border-radius:2px;
+    background:var(--volt-deep);margin:5px auto 0}
 
-  .toast{position:fixed;left:50%;transform:translateX(-50%) translateY(10px);bottom:calc(90px + env(safe-area-inset-bottom));
-    background:var(--ink);color:#fff;font:600 14px var(--sans);padding:10px 18px;border-radius:10px;
-    opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+  .toast{position:fixed;left:50%;transform:translateX(-50%) translateY(10px);
+    bottom:calc(94px + env(safe-area-inset-bottom));
+    background:var(--ink);color:var(--volt);font:800 14px var(--sans);padding:11px 20px;
+    border-radius:12px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   @media (prefers-reduced-motion: reduce){.toast{transition:none}}
-  button:focus-visible,input:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+  button:focus-visible,input:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -153,10 +199,32 @@
     <button id="mode-sea" onclick="setMode('sea')">Sea level</button>
   </div>
 
-  <div class="yard-wrap">
+  <div class="seg" id="input-mode" style="margin-top:10px" role="tablist" aria-label="Input mode">
+    <button id="im-num" class="on" onclick="setInputMode('num')">One number</button>
+    <button id="im-green" onclick="setInputMode('green')">Cart GPS · F / P / B</button>
+  </div>
+
+  <div class="yard-wrap" id="num-wrap">
     <input id="yardage" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3"
            placeholder="150" autocomplete="off" aria-label="Target yardage">
     <div class="unit">Yards to carry</div>
+  </div>
+
+  <div id="green-wrap" style="display:none;margin:18px 0 6px">
+    <div class="fpb-row">
+      <div class="fpb">
+        <label for="gps-f">Front</label>
+        <input id="gps-f" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="152">
+      </div>
+      <div class="fpb">
+        <label for="gps-p">Pin</label>
+        <input id="gps-p" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="160">
+      </div>
+      <div class="fpb">
+        <label for="gps-b">Back</label>
+        <input id="gps-b" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="171">
+      </div>
+    </div>
   </div>
 
   <div id="result"></div>
@@ -390,17 +458,65 @@ const SWING_COPY = {
   choke:    {tag:'Choke down \u00BD\u2033', cls:'swing-committed', note:''}
 };
 
+/* Cart GPS mode: decide the carry target from Front / Pin / Back.
+   Short clubs (9i down) stop where they land -> play the pin.
+   Longer clubs release -> play front + 5 and let it feed. */
+const STOPPERS = ['9i','PW','54','58'];
+function resolveGreenTarget(f, p, b){
+  let target, why;
+  if(!f){
+    target = p; why = 'Pin as carry \u2014 no front number given';
+  }else{
+    const probe = recommend(p);
+    const stops = probe && (probe.chip || (probe.c && STOPPERS.includes(probe.c.id)));
+    if(stops){ target = p; why = 'Playing the pin \u2014 this shot stops where it lands'; }
+    else{ target = f + 5; why = 'Front + 5 \u2014 land the front third, let it release'; }
+  }
+  let depthFlag = '';
+  if(f && b && b > f){
+    const depth = b - f;
+    if(depth < 22) depthFlag = `Shallow green \u2014 only ${depth} yds deep. Long is dead; favor the front.`;
+  }
+  return {target, why, depthFlag};
+}
+
+let inputMode = 'num';
+function setInputMode(m){
+  inputMode = m;
+  document.getElementById('im-num').classList.toggle('on', m==='num');
+  document.getElementById('im-green').classList.toggle('on', m==='green');
+  document.getElementById('num-wrap').style.display = m==='num' ? '' : 'none';
+  document.getElementById('green-wrap').style.display = m==='green' ? '' : 'none';
+  renderResult();
+}
+
 function renderResult(){
   const el = document.getElementById('result');
-  const raw = document.getElementById('yardage').value.trim();
-  const y = parseInt(raw,10);
-  if(!raw || isNaN(y) || y < 10){
-    el.innerHTML = '<p class="hint">Type a carry number and I\u2019ll pull the club.</p>';
-    return;
+  let y, strip = '';
+
+  if(inputMode === 'green'){
+    const f = parseInt(document.getElementById('gps-f').value,10) || 0;
+    const p = parseInt(document.getElementById('gps-p').value,10) || 0;
+    const b = parseInt(document.getElementById('gps-b').value,10) || 0;
+    if(!p || p < 10){
+      el.innerHTML = '<p class="hint">Type the cart GPS numbers \u2014 at least the Pin.</p>';
+      return;
+    }
+    const g = resolveGreenTarget(f, p, b);
+    y = g.target;
+    strip = `<div class="target-strip"><span class="num">${y}</span><span class="why">${g.why}</span></div>`
+          + (g.depthFlag ? `<div class="depth-flag">${g.depthFlag}</div>` : '');
+  }else{
+    const raw = document.getElementById('yardage').value.trim();
+    y = parseInt(raw,10);
+    if(!raw || isNaN(y) || y < 10){
+      el.innerHTML = '<p class="hint">Type a carry number and I\u2019ll pull the club.</p>';
+      return;
+    }
   }
   const rec = recommend(y);
   if(rec && rec.chip){
-    el.innerHTML = `
+    el.innerHTML = strip + `
       <div class="card">
         <div class="club-line"><span class="club-name">Chip it</span>
           <span class="club-range">&lt; ${disp(SEED[SEED.length-1].lo + (adj['58']||0))} yds</span></div>
@@ -420,7 +536,7 @@ function renderResult(){
   const estNote = isEst(c) ? '<div class="swing-note" style="color:var(--amber)">Estimated range — log real shots with this club to dial it in.</div>' : '';
   const needleLeft = Math.max(2, Math.min(98, pos*100));
 
-  el.innerHTML = `
+  el.innerHTML = strip + `
     <div class="card">
       <div class="club-line">
         <span class="club-name">${c.name}${est}</span>
@@ -604,6 +720,8 @@ function toast(msg){
     document.getElementById('delta-dir').textContent = v==='long' ? 'long' : 'short';
   });
   document.getElementById('yardage').addEventListener('input', renderResult);
+  for(const id of ['gps-f','gps-p','gps-b'])
+    document.getElementById(id).addEventListener('input', renderResult);
   document.getElementById('log-target').addEventListener('input', validateSave);
 
   try{

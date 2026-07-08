@@ -1,7 +1,7 @@
 /* Caddie service worker — cache-first so the app runs fully offline.
    To ship an update: bump VERSION, push, then reopen the app twice
    (once to fetch the new worker, once to load through it). */
-const VERSION = 'caddie-v1';
+const VERSION = 'caddie-v3';
 const ASSETS = [
   './',
   'index.html',
